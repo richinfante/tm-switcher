@@ -13,8 +13,16 @@ export const CoreSwitcherBehavior: Behavior = async ({ associations, attachments
         }
 
         if (atem && association?.atem) {
-            await atem.changeProgramInput(association.atem);
-        };
+            // change input
+            if ('input' in association?.atem && association.atem.input) {
+                await atem.changeProgramInput(association.atem.input);
+            };
+
+            // run macro
+            if ('macro' in association?.atem && association.atem.macro) {
+                await atem.macroRun(association.atem.macro);
+            }
+        }
     }
 
     fieldset.on("matchStarted", async match => {
@@ -49,7 +57,15 @@ export const CoreSwitcherBehavior: Behavior = async ({ associations, attachments
         }
 
         if (atem && association?.atem) {
-            await atem.changeProgramInput(association.atem);
-        };
+            // change input
+            if ('input' in association?.atem && association.atem.input) {
+                await atem.changeProgramInput(association.atem.input);
+            };
+
+            // run macro
+            if ('macro' in association?.atem && association.atem.macro) {
+                await atem.macroRun(association.atem.macro);
+            }
+        }
     });
 };

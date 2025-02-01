@@ -114,7 +114,7 @@ export async function getTournamentAttachments(
 
 export type Association = {
   obs: string | undefined;
-  atem: number | undefined;
+  atem: { input: number } | { macro: number } | undefined;
 };
 
 export type FieldAssociations = Record<string, Association | undefined>;
@@ -157,9 +157,11 @@ export async function getAssociations(
     }
 
     if (atem && atem.state) {
-      const inputs = Object.entries(atem.state?.inputs);
+      const atemInputs = Object.entries(atem.state?.inputs);
+      const atemMacros = atem?.state?.macro?.macroProperties ?? []
+
       const defaultValue = Number.parseInt(
-        inputs.find(
+        atemInputs.find(
           ([value, input]) =>
             input?.shortName.toLowerCase() === field.name.toLowerCase()
         )?.[0] ?? "NaN"
@@ -168,10 +170,18 @@ export async function getAssociations(
         name: "atem",
         type: "list",
         message: `What ATEM input do you want to associate with ${field.name}? `,
-        choices: inputs.map(([value, input]) => ({
-          name: input?.shortName,
-          value: Number.parseInt(value),
-        })),
+        choices: [
+          ...atemInputs.map(([value, input]) => ({
+            name: `Input ${value}: ${input?.shortName}`,
+            value: { input: Number.parseInt(value) },
+          })),
+
+          ...atemMacros.map((macro, index) => ({
+              name: `Macro: ${macro?.name}`,
+              value: { macro: index },
+            })
+          )
+        ],
         default: isNaN(defaultValue) ? undefined : defaultValue,
       });
     }
@@ -222,6 +232,7 @@ export async function getDisplayAssociations(
 
   const obsScenes = (await obs?.call("GetSceneList")) ?? { scenes: [] };
   const atemInputs = Object.entries(atem?.state?.inputs ?? {});
+  const atemMacros = atem?.state?.macro?.macroProperties ?? [];
 
   if (obsScenes.scenes.length < 2 && atemInputs.length < 2) {
     return associations;
@@ -267,7 +278,7 @@ export async function getDisplayAssociations(
       });
     }
 
-    if (atemInputs.length > 1) {
+    if (atemInputs.length > 1 || atemMacros.length > 0) {
       questions.push({
         type: "list",
         name: "atem",
@@ -275,7 +286,11 @@ export async function getDisplayAssociations(
         choices: [
           ...atemInputs.map(([value, input]) => ({
             name: input?.shortName,
-            value: Number.parseInt(value),
+            value: { input: Number.parseInt(value) },
+          })),
+          ...atemMacros?.map((macro, index) => ({
+            name: `Macro: ${macro?.name}`,
+            value: { macro: index },
           })),
           { name: "No Association", value: undefined },
         ],
